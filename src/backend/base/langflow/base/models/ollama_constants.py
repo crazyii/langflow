@@ -1,6 +1,6 @@
 # https://ollama.com/search?c=embedding
 OLLAMA_EMBEDDING_MODELS = [
-    "nomic-embed-text",
+    # "nomic-embed-text",
     "mxbai-embed-large",
     "snowflake-arctic-embed",
     "all-minilm",
@@ -8,6 +8,7 @@ OLLAMA_EMBEDDING_MODELS = [
     "paraphrase-multilingual",
     "granite-embedding",
     "jina-embeddings-v2-base-en",
+    "embedding_qwen2_1.5b_instruct",
 ]
 # https://ollama.com/search?c=tools
 OLLAMA_TOOL_MODELS_BASE = [

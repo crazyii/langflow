@@ -5,6 +5,7 @@ from .file import FileComponent
 from .json_to_data import JSONToDataComponent
 from .s3_bucket_uploader import S3BucketUploaderComponent
 from .sql_executor import SQLExecutorComponent
+from .text_file_parser import TextFileParserComponent
 from .url import URLComponent
 from .webhook import WebhookComponent
 
@@ -16,6 +17,7 @@ __all__ = [
     "JSONToDataComponent",
     "S3BucketUploaderComponent",
     "SQLExecutorComponent",
+    "TextFileParserComponent",
     "URLComponent",
     "WebhookComponent",
 ]
