@@ -16,9 +16,8 @@ class ComposioGmailAPIComponent(ComposioBaseComponent):
     """Gmail API component for interacting with Gmail services."""
 
     display_name: str = "Gmail"
-    description: str = "Gmail API"
     name = "GmailAPI"
-    icon = "Gmail"
+    icon = "Google"
     documentation: str = "https://docs.composio.dev"
     app_name = "gmail"
 
@@ -81,27 +80,8 @@ class ComposioGmailAPIComponent(ComposioBaseComponent):
     _all_fields = {field for action_data in _actions_data.values() for field in action_data["action_fields"]}
     _bool_variables = {"is_html", "include_spam_trash"}
 
-    # Cache for action fields mapping
-    _action_fields_cache: dict[str, set[str]] = {}
-    _readonly_actions = frozenset(
-        [
-            "GMAIL_FETCH_EMAILS",
-            "GMAIL_GET_PROFILE",
-            "GMAIL_FETCH_MESSAGE_BY_MESSAGE_ID",
-            "GMAIL_FETCH_MESSAGE_BY_THREAD_ID",
-            "GMAIL_LIST_THREADS",
-            "GMAIL_LIST_LABELS",
-            "GMAIL_GET_PEOPLE",
-        ]
-    )
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._all_fields = {
-            field for action_data in self._actions_data.values() for field in action_data["action_fields"]
-        }
-
-        self._bool_variables = {"is_html", "include_spam_trash"}
         self._default_tools = {
             self.sanitize_action_name("GMAIL_SEND_EMAIL").replace(" ", "-"),
             self.sanitize_action_name("GMAIL_FETCH_EMAILS").replace(" ", "-"),
