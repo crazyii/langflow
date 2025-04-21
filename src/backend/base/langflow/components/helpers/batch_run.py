@@ -14,12 +14,18 @@ if TYPE_CHECKING:
 
 
 class BatchRunComponent(Component):
-    display_name = "Batch Run"
-    description = "Runs an LLM over each row of a DataFrame's column. If no column is set, the entire row is passed."
-    icon = "List"
-    beta = True
+    """
+    批量处理组件，用于对数据框中的数据进行批量处理
+    主要功能：对数据框的每一行应用语言模型，并收集处理结果
+    """
+    display_name = "Batch Run"  # 组件显示名称
+    description = "Runs an LLM over each row of a DataFrame's column. If no column is set, the entire row is passed."  # 组件描述
+    icon = "List"  # 组件图标
+    beta = True  # 标记为测试版
 
+    # 定义组件的输入参数
     inputs = [
+        # 语言模型输入
         HandleInput(
             name="model",
             display_name="Language Model",
@@ -27,18 +33,21 @@ class BatchRunComponent(Component):
             input_types=["LanguageModel"],
             required=True,
         ),
+        # 系统消息输入
         MultilineInput(
             name="system_message",
             display_name="Instructions",
             info="Multi-line system instruction for all rows in the DataFrame.",
             required=False,
         ),
+        # 数据框输入
         DataFrameInput(
             name="df",
             display_name="DataFrame",
             info="The DataFrame whose column (specified by 'column_name') we'll treat as text messages.",
             required=True,
         ),
+        # 列名输入
         MessageTextInput(
             name="column_name",
             display_name="Column Name",
@@ -49,6 +58,7 @@ class BatchRunComponent(Component):
             required=False,
             advanced=False,
         ),
+        # 输出列名输入
         MessageTextInput(
             name="output_column_name",
             display_name="Output Column Name",
@@ -57,6 +67,7 @@ class BatchRunComponent(Component):
             required=False,
             advanced=True,
         ),
+        # 元数据开关
         BoolInput(
             name="enable_metadata",
             display_name="Enable Metadata",
@@ -67,6 +78,7 @@ class BatchRunComponent(Component):
         ),
     ]
 
+    # 定义组件的输出
     outputs = [
         Output(
             display_name="DataFrame",
@@ -77,14 +89,32 @@ class BatchRunComponent(Component):
     ]
 
     def _format_row_as_toml(self, row: dict[str, Any]) -> str:
-        """Convert a dictionary (row) into a TOML-formatted string."""
+        """
+        将数据行转换为TOML格式的字符串
+        
+        Args:
+            row: 包含列名和值的字典
+            
+        Returns:
+            str: TOML格式的字符串
+        """
         formatted_dict = {str(col): {"value": str(val)} for col, val in row.items()}
         return toml.dumps(formatted_dict)
 
     def _create_base_row(
         self, original_row: dict[str, Any], model_response: str = "", batch_index: int = -1
     ) -> dict[str, Any]:
-        """Create a base row with original columns and additional metadata."""
+        """
+        创建基础行数据，包含原始列和模型响应
+        
+        Args:
+            original_row: 原始行数据
+            model_response: 模型响应文本
+            batch_index: 批次索引
+            
+        Returns:
+            dict: 包含原始数据和模型响应的新行
+        """
         row = original_row.copy()
         row[self.output_column_name] = model_response
         row["batch_index"] = batch_index
@@ -93,7 +123,15 @@ class BatchRunComponent(Component):
     def _add_metadata(
         self, row: dict[str, Any], *, success: bool = True, system_msg: str = "", error: str | None = None
     ) -> None:
-        """Add metadata to a row if enabled."""
+        """
+        为行数据添加元数据信息
+        
+        Args:
+            row: 要添加元数据的行
+            success: 处理是否成功
+            system_msg: 系统消息
+            error: 错误信息（如果有）
+        """
         if not self.enable_metadata:
             return
 
@@ -111,25 +149,22 @@ class BatchRunComponent(Component):
             }
 
     async def run_batch(self) -> DataFrame:
-        """Process each row in df[column_name] with the language model asynchronously.
-
+        """
+        批量处理数据框中的每一行数据
+        
         Returns:
-            DataFrame: A new DataFrame containing:
-                - All original columns
-                - The model's response column (customizable name)
-                - 'batch_index' column for processing order
-                - 'metadata' (optional)
-
+            DataFrame: 包含处理结果的新数据框
+            
         Raises:
-            ValueError: If the specified column is not found in the DataFrame
-            TypeError: If the model is not compatible or input types are wrong
+            ValueError: 当指定的列不存在时
+            TypeError: 当输入类型不正确时
         """
         model: Runnable = self.model
         system_msg = self.system_message or ""
         df: DataFrame = self.df
         col_name = self.column_name or ""
 
-        # Validate inputs first
+        # 验证输入数据
         if not isinstance(df, DataFrame):
             msg = f"Expected DataFrame input, got {type(df)}"
             raise TypeError(msg)
@@ -139,7 +174,7 @@ class BatchRunComponent(Component):
             raise ValueError(msg)
 
         try:
-            # Determine text input for each row
+            # 准备要处理的文本数据
             if col_name:
                 user_texts = df[col_name].astype(str).tolist()
             else:
@@ -150,7 +185,7 @@ class BatchRunComponent(Component):
             total_rows = len(user_texts)
             logger.info(f"Processing {total_rows} rows with batch run")
 
-            # Prepare the batch of conversations
+            # 准备对话数据
             conversations = [
                 [{"role": "system", "content": system_msg}, {"role": "user", "content": text}]
                 if system_msg
@@ -158,7 +193,7 @@ class BatchRunComponent(Component):
                 for text in user_texts
             ]
 
-            # Configure the model with project info and callbacks
+            # 配置模型
             model = model.with_config(
                 {
                     "run_name": self.display_name,
@@ -166,7 +201,8 @@ class BatchRunComponent(Component):
                     "callbacks": self.get_langchain_callbacks(),
                 }
             )
-            # Process batches and track progress
+
+            # 处理数据并跟踪进度
             responses_with_idx = list(
                 zip(
                     range(len(conversations)),
@@ -175,10 +211,10 @@ class BatchRunComponent(Component):
                 )
             )
 
-            # Sort by index to maintain order
+            # 按索引排序以保持顺序
             responses_with_idx.sort(key=lambda x: x[0])
 
-            # Build the final data with enhanced metadata
+            # 构建最终结果
             rows: list[dict[str, Any]] = []
             for idx, (original_row, response) in enumerate(
                 zip(df.to_dict(orient="records"), responses_with_idx, strict=False)
@@ -190,7 +226,7 @@ class BatchRunComponent(Component):
                 self._add_metadata(row, success=True, system_msg=system_msg)
                 rows.append(row)
 
-                # Log progress
+                # 记录进度
                 if (idx + 1) % max(1, total_rows // 10) == 0:
                     logger.info(f"Processed {idx + 1}/{total_rows} rows")
 
@@ -198,7 +234,7 @@ class BatchRunComponent(Component):
             return DataFrame(rows)
 
         except (KeyError, AttributeError) as e:
-            # Handle data structure and attribute access errors
+            # 处理错误情况
             logger.error(f"Data processing error: {e!s}")
             error_row = self._create_base_row({col: "" for col in df.columns}, model_response="", batch_index=-1)
             self._add_metadata(error_row, success=False, error=str(e))
