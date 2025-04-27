@@ -275,7 +275,32 @@ async def simplified_run_flow(
     input_request: SimplifiedAPIRequest | None = None,
     stream: bool = False,
     api_key_user: Annotated[UserRead, Depends(api_key_security)],
+    request: Request,  # 添加 request 参数
+
 ):
+    logger.info("=====================================---===")
+    logger.info("Request Details:")
+    logger.info(f"URL: {request.url}")
+    logger.info(f"Method: {request.method}")
+    logger.info(f"Headers: {dict(request.headers)}")
+    logger.info(f"Query Parameters: {dict(request.query_params)}")
+    
+    # 打印请求体
+    try:
+        body = await request.body()
+        logger.info(f"Raw Request Body: {body.decode()}")
+    except Exception as e:
+        logger.error(f"Error reading request body: {e}")
+    
+    # 打印解析后的参数
+    logger.info("Parsed Parameters:")
+    logger.info(f"Flow: {flow}")
+    logger.info(f"Input Request: {input_request}")
+    logger.info(f"Stream: {stream}")
+    logger.info(f"API Key User: {api_key_user}")
+    logger.info("=====================================---===")
+    
+
     """Executes a specified flow by ID with support for streaming and telemetry.
 
     This endpoint executes a flow identified by ID or name, with options for streaming the response
