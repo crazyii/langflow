@@ -8,6 +8,8 @@ OLLAMA_EMBEDDING_MODELS = [
     "paraphrase-multilingual",
     "granite-embedding",
     "jina-embeddings-v2-base-en",
+    "embedding_qwen2_1.5b_instruct",
+
 ]
 # https://ollama.com/search?c=tools
 OLLAMA_TOOL_MODELS_BASE = [
@@ -40,8 +42,10 @@ OLLAMA_TOOL_MODELS_BASE = [
 
 
 URL_LIST = [
-    "http://localhost:11434",
-    "http://host.docker.internal:11434",
-    "http://127.0.0.1:11434",
-    "http://0.0.0.0:11434",
+    #"http://localhost:11434",
+    #"http://host.docker.internal:11434",
+    #"http://127.0.0.1:11434",
+    #"http://0.0.0.0:11434",
+    #"http://192.168.1.111:11434",
+
 ]
